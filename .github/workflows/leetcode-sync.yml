@@ -2,8 +2,8 @@ name: Sync LeetCode Submissions
 
 on:
   schedule:
-    - cron: "0 0 * * *"  # Runs daily at midnight
-  workflow_dispatch:      # Allows manual triggering
+    - cron: "0 0 * * *"
+  workflow_dispatch:
 
 jobs:
   sync:
@@ -14,9 +14,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          
+        
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -28,21 +26,28 @@ jobs:
       - name: Login to LeetCode
         run: leetcode user -l --cookie "${{ secrets.LEETCODE_COOKIE }}"
         
-      - name: Fetch and save submissions
+      - name: Sync and Push
         run: |
-          git pull origin main
-          leetcode submission -a > submissions.txt
-          
-      - name: Commit and push changes
-        run: |
+          # Configure git
           git config --local user.name "${{ github.actor }}"
           git config --local user.email "${{ github.actor }}@users.noreply.github.com"
           
+          # Fetch all history and branches
+          git fetch origin
+          
+          # Reset to match remote branch exactly
+          git reset --hard origin/main
+          
+          # Get submissions
+          leetcode submission -a > submissions.txt
+          
+          # Stage changes
           git add submissions.txt
           
+          # Commit if there are changes
           if git diff --staged --quiet; then
-            echo "No new submissions to sync"
+            echo "No changes to commit"
           else
-            git commit -m "🔄 Synced LeetCode submissions"
-            git push
+            git commit -m "Synced LeetCode solutions"
+            git push origin main
           fi
