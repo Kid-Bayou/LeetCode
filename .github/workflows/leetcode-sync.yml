@@ -2,41 +2,43 @@ name: Sync LeetCode Submissions
 
 on:
   schedule:
-    - cron: "0 0 * * *" 
-  workflow_dispatch: 
+    - cron: "0 0 * * *"  # Runs at midnight every day
+  workflow_dispatch:
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write  # Add explicit permissions
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}  # Explicitly specify token
+          
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
-
+          
       - name: Install LeetCode CLI
         run: npm install -g leetcode-cli
-
+        
       - name: Login to LeetCode
-        run: leetcode user -l --cookie ${{ secrets.LEETCODE_COOKIE }}
-
+        run: leetcode user -l --cookie "${{ secrets.LEETCODE_COOKIE }}"
+        
       - name: Fetch latest submissions
         run: leetcode submission -a > submissions.txt
-
+        
       - name: Commit and push changes
         run: |
-          git config --global user.name "Kid-Bayou"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git add .
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
             git commit -m "Updated LeetCode solutions [Automated]"
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Kid-Bayou/LeetCode.git
+            git push
           fi
-
-
