@@ -2,8 +2,8 @@ name: Sync LeetCode Submissions
 
 on:
   schedule:
-    - cron: "0 0 * * *"  # Runs at midnight every day
-  workflow_dispatch:
+    - cron: "0 0 * * *" 
+  workflow_dispatch:  
 
 jobs:
   sync:
@@ -15,7 +15,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Fetch all history for all branches and tags
+          fetch-depth: 0 
+          persist-credentials: false 
+          
+      - name: Configure Git
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
           
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -28,21 +34,23 @@ jobs:
       - name: Login to LeetCode
         run: leetcode user -l --cookie "${{ secrets.LEETCODE_COOKIE }}"
         
-      - name: Fetch latest submissions
-        run: leetcode submission -a > submissions.txt
+      - name: Create Solutions Directory
+        run: mkdir -p leetcode_solutions
         
-      - name: Commit and push changes
+      - name: Fetch latest submissions
         run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          cd leetcode_solutions
+          leetcode submission -a > submissions.txt
           
-          # Pull the latest changes
-          git pull origin main --rebase
+      - name: Push to GitHub
+        run: |
+          git pull origin main --rebase || true
+          git add leetcode_solutions/
           
-          git add .
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "No new solutions to sync"
           else
-            git commit -m "Updated LeetCode solutions [Automated]"
+            git commit -m "Synced LeetCode submissions"
+            git remote set-url origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
             git push origin main
           fi
