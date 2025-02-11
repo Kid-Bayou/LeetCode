@@ -30,7 +30,12 @@ jobs:
       - name: Commit and push changes
         run: |
           git config --global user.name "Kid-Bayou"
-          git config --global user.email "kidist.t.gebrehiwot@gmail.com"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "Updated LeetCode solutions [Automated]" || echo "No changes to commit"
-          git push
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Updated LeetCode solutions [Automated]"
+            git push https://github-actions:${{ secrets.GITHUB_TOKEN }}@github.com/Kid-Bayou/LeetCode.git
+          fi
+
