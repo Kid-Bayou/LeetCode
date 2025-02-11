@@ -1,0 +1,36 @@
+name: Sync LeetCode Submissions
+
+on:
+  schedule:
+    - cron: "0 0 * * *" 
+  workflow_dispatch: 
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install LeetCode CLI
+        run: npm install -g leetcode-cli
+
+      - name: Login to LeetCode
+        run: leetcode user -l --cookie ${{ secrets.LEETCODE_COOKIE }}
+
+      - name: Fetch latest submissions
+        run: leetcode submission -a > submissions.txt
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "Kid-Bayou"
+          git config --global user.email "kidist.t.gebrehiwot@gmail.com"
+          git add .
+          git commit -m "Updated LeetCode solutions [Automated]" || echo "No changes to commit"
+          git push
