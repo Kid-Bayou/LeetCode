@@ -1,53 +1,33 @@
-name: Sync LeetCode Submissions
+name: Sync LeetCode Solutions
 
 on:
   schedule:
-    - cron: "0 0 * * *"
-  workflow_dispatch:
+    - cron: '0 * * * *'  # Runs every hour
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          node-version: 18
-          
-      - name: Install LeetCode CLI
-        run: npm install -g leetcode-cli
-        
-      - name: Login to LeetCode
-        run: leetcode user -l --cookie "${{ secrets.LEETCODE_COOKIE }}"
-        
-      - name: Sync and Push
+          python-version: '3.x'
+
+      - name: Install LeetCode Sync Tool
+        run: pip install git+https://github.com/joshcai/leetcode-sync.git
+
+      - name: Sync LeetCode Solutions
         run: |
-          # Configure git
-          git config --local user.name "${{ github.actor }}"
-          git config --local user.email "${{ github.actor }}@users.noreply.github.com"
-          
-          # Fetch all history and branches
-          git fetch origin
-          
-          # Reset to match remote branch exactly
-          git reset --hard origin/main
-          
-          # Get submissions
-          leetcode submission -a > submissions.txt
-          
-          # Stage changes
-          git add submissions.txt
-          
-          # Commit if there are changes
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Synced LeetCode solutions"
-            git push origin main
-          fi
+          leetcode-sync --cookie "${{ secrets.LEETCODE_COOKIE }}" --repo .
+        
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Auto-sync LeetCode solutions $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
+          git push
