@@ -26,8 +26,14 @@ jobs:
         
       - name: Commit and Push Changes
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "Auto-sync LeetCode solutions $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
-          git push
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add .
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Updated LeetCode solutions [Automated]"
+          git pull --rebase origin main  # Pull latest changes before pushing
+          git push origin main
+        fi
+
