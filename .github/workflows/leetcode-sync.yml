@@ -36,6 +36,7 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "Updated LeetCode solutions [Automated]"
-            git push https://github-actions:${{ secrets.GITHUB_TOKEN }}@github.com/Kid-Bayou/LeetCode.git
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Kid-Bayou/LeetCode.git
           fi
+
 
