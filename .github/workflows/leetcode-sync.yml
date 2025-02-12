@@ -1,39 +1,21 @@
-name: Sync LeetCode Solutions
+name: Sync Leetcode
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: '0 * * * *'  # Runs every hour
-  workflow_dispatch:  # Allows manual triggering
+    - cron: "0 8 * * 6"
 
 jobs:
-  sync:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Sync
+        uses: joshcai/leetcode-sync@v1.7
         with:
-          python-version: '3.x'
-
-      - name: Install LeetCode Sync Tool
-        run: pip install git+https://github.com/joshcai/leetcode-sync.git
-
-      - name: Sync LeetCode Solutions
-        run: |
-          leetcode-sync --cookie "${{ secrets.LEETCODE_COOKIE }}" --repo .
-
-      - name: Commit and Push Changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Updated LeetCode solutions [Automated]"
-            git pull --rebase origin main  # Pull latest changes before pushing
-            git push origin main
-          fi
+          github-token: ${{ github.token }}
+          leetcode-csrf-token: ${{ secrets.LEETCODE_CSRF_TOKEN }}
+          leetcode-session: ${{ secrets.LEETCODE_SESSION }}
+          destination-folder: my-folder
+          verbose: true
+          commit-header: "[LeetCode Sync]"
